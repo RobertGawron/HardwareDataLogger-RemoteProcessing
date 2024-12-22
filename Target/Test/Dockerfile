@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create workspace directory
-RUN mkdir -p /workspace/build
-WORKDIR /workspace/build
+RUN mkdir -p /workspace
+WORKDIR /workspace
 
 # Create a virtual environment and install the package
 RUN python3 -m venv /workspace/build/venv && \

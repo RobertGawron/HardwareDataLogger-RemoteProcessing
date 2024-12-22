@@ -27,10 +27,10 @@ node "Host Machine (Raspberry Pi or User's PC)" #LightYellow {
         portin "Port 8086" as influx_io     
     }
 
-    component "Telegraf" <<docker>> as telegraf{
+    component "Node-RED" <<docker>> as node_red{
     }
 
-    component "Paho-MQTT" <<docker>> #F1F1F1 {
+    component "MQTT-Broker" <<docker>> #F1F1F1 {
         portin "Port 1883" as mqtt_io
     }
 
@@ -41,8 +41,8 @@ node "Host Machine (Raspberry Pi or User's PC)" #LightYellow {
     "Port 1883" -left-> mqtt_io
 
     grafana  --> influx_io 
-    telegraf --> influx_io
-    mqtt_io -left-> telegraf
+    node_red --> influx_io
+    mqtt_io -left-> node_red
     hw_mock -left-> mqtt_io
 
 }

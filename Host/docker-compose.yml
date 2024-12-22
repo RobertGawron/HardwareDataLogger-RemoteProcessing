@@ -1,0 +1,19 @@
+services:
+  hwlogger-arm-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hwlogger-arm-builder
+    network_mode: "host"
+    volumes:
+      - ../Target/docker-compose.yml:/workspace/docker-compose.yml
+      - ../Target/Conf/telegraf.conf:/workspace/telegraf.conf
+      - ssh_keys:/root/.ssh_host   # named volume for SSH keys
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_CLI_EXPERIMENTAL=enabled # Enable Docker experimental features (for buildx)
+    tty: true
+    stdin_open: true
+
+volumes:
+  ssh_keys:
