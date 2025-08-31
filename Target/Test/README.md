@@ -1,4 +1,4 @@
-# Objective
+# Purpouse
 
 The purpose of this script is to generate fake measurement data to simulate the real device. This allows testing of measurement storage and visualization without the need for hardware or deployment to a remote host. All operations are performed locally on the PC.
 
@@ -6,7 +6,7 @@ The script runs in its own container and sends data via MQTT (over TCP/IP), simu
 
 # Configuration
 
-Follow the instructions in this manual to set up and configure all required containers for this project.
+Follow [the instructions in this manual](../../Host/README.md) to set up and configure all required containers for this project.
 
 Use the following command to access the test container:
 
@@ -31,21 +31,23 @@ The script will simulate data and send it via MQTT. When you no longer need data
 
 ## Troubleshooting
 
-**Listen for MQTT Messages**
+### Listen for MQTT Messages
 Run the following command to listen in the background for messages on the MQTT topic:
 
 ```
 mosquitto_sub -h mqtt-broker -p 1883 -t "test/topic" &
 ```
 
-**Send a Test Message**
+### Send a Test Message
+
 Publish a message to verify the MQTT broker is receiving messages:
 
 ```
 mosquitto_pub -h mqtt-broker -p 1883 -t "test/topic" -m "Hello, MQTT"
 ```
 
-**Verify Communication**
+### Verify Communication
+
 If the broker is functioning correctly, the message will be echoed back. Example session:
 
 ```
