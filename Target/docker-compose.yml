@@ -1,0 +1,105 @@
+services:
+
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    restart: unless-stopped # Broker restarts on failure or reboot
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mqtt_config:/mosquitto/config
+      - mqtt_data:/mosquitto/data
+      - mqtt_log:/mosquitto/log
+    command: >
+      sh -c "
+        rm -f /mosquitto/config/mosquitto.conf &&
+        echo 'listener 1883' > /mosquitto/config/mosquitto.conf &&
+        echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf &&
+        exec /docker-entrypoint.sh mosquitto -c /mosquitto/config/mosquitto.conf
+      "
+    networks:
+      - app-network
+
+  influxdb:
+    image: influxdb:latest
+    platform: linux/arm64
+    restart: unless-stopped # InfluxDB restarts on failure or reboot
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    networks:
+      - app-network
+    # Healthcheck tells other containers when InfluxDB is truly ready.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  grafana:
+    image: grafana/grafana:latest
+    platform: linux/arm64
+    restart: unless-stopped # Grafana restarts on failure or reboot
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - app-network
+    # Grafana wait until InfluxDB is fully healthy before starting.
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    networks:
+      - app-network
+    volumes:
+      - nodered_data:/data
+    # Node-RED wait for both the broker and a healthy InfluxDB.
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_started
+    command: >
+      bash -c "cd /data &&
+      npm install node-red-contrib-influxdb &&
+      npm start --cache /data/.npm -- --userDir /data"
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    networks:
+      - app-network
+    volumes:
+      - homeassistant_config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=UTC
+    # HA wait for the broker to be ready.
+    depends_on:
+      - mqtt-broker
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  influxdb_data:
+  grafana_data:
+  mqtt_config:       
+  mqtt_data:         
+  mqtt_log:       
+  homeassistant_config:   
+  nodered_data:
